@@ -208,60 +208,9 @@ body{
     linear-gradient(180deg,#fff5f3,#edd7d2);
 }
 
-.slides{ padding-left: 220px; }
-.sidebar{
-  position: fixed;
-  top: 48px;
-  left: 0;
-  bottom: 0;
-  width: 220px;
-  overflow-y: auto;
-  padding: 20px 12px;
-  background: rgba(255,255,255,0.6);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.05);
-  border-right:1px solid rgba(0,0,0,0.04);
-  z-index: 99;
-}
-.sidebar h2{
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 1.4px;
-  margin: 0 10px 12px;
-  background:linear-gradient(90deg,#b98576,#d8a29a);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-}
-.nav-item{
-  width: 100%;
-  text-align: left;
-  border: 0;
-  background: transparent;
-  padding: 10px 12px;
-  margin-bottom: 4px;
-  border-radius: 10px;
-  color: #5f5a57;
-  font-size: 12px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-.nav-item::after{
-  content:'';
-  position:absolute;
-  left:12px;
-  bottom:6px;
-  width:0%;
-  height:2px;
-  background:var(--mdh-terra);
-  transition: width .3s ease;
-}
-.nav-item:hover::after{ width: calc(100% - 24px); }
-.nav-item.active{
-  background: rgba(216,162,153,0.18);
-  color: #3B3A39;
-  box-shadow: inset 0 0 0 1px rgba(216,162,153,0.35);
-}
+.slides{ padding-left: 0; }
+
+
 
 .slide.section {
   opacity: 0 !important;
@@ -355,25 +304,8 @@ body{
 </div>
 <div class="progress-bar" id="prog" style="width:6.25%"></div>
 
-<div class="sidebar" id="sidebar">
-  <h2>Section Navigator</h2>
-  <button class="nav-item" data-slide="0">01 · Title</button>
-  <button class="nav-item" data-slide="1">02 · Agenda</button>
-  <button class="nav-item" data-slide="2">03 · Why Meta</button>
-  <button class="nav-item" data-slide="3">04 · Framework</button>
-  <button class="nav-item" data-slide="4">05 · Objective</button>
-  <button class="nav-item" data-slide="5">06 · Mission Card</button>
-  <button class="nav-item" data-slide="6">07 · Setup Steps</button>
-  <button class="nav-item" data-slide="7">08 · Campaign</button>
-  <button class="nav-item" data-slide="8">09 · Ad Set Intro</button>
-  <button class="nav-item" data-slide="9">10 · Ad Set Setup</button>
-  <button class="nav-item" data-slide="10">11 · Creative</button>
-  <button class="nav-item" data-slide="11">12 · Example</button>
-  <button class="nav-item" data-slide="12">13 · Reporting</button>
-  <button class="nav-item" data-slide="13">14 · Troubleshooting</button>
-  <button class="nav-item" data-slide="14">15 · Ethics</button>
-  <button class="nav-item" data-slide="15">16 · Next Session</button>
-</div>
+
+
 
 <!-- MDH Credit -->
 <div class="mdh-credit">
@@ -907,7 +839,7 @@ body{
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const slides = Array.from(document.querySelectorAll('.slide'));
-  const navItems = Array.from(document.querySelectorAll('.nav-item'));
+  // const navItems = Array.from(document.querySelectorAll('.nav-item'));
   const counter = document.getElementById('ctr');
   const progressBar = document.getElementById('prog');
   let current = slides.findIndex(slide => slide.classList.contains('active'));
@@ -944,24 +876,24 @@ document.addEventListener("DOMContentLoaded", () => {
       slides[current].classList.add('show');
     });
 
-    navItems.forEach((item) => {
-      item.classList.toggle('active', Number(item.dataset.slide) === current);
-    });
+    // navItems.forEach((item) => {
+      // item.classList.toggle('active', Number(item.dataset.slide) === current);
+    // });
 
     counter.textContent = `${current + 1} / ${slides.length}`;
     const width = ((current + 1) / slides.length) * 100;
     progressBar.style.width = `${width}%`;
   };
 
-  navItems.forEach((item) => {
-    item.addEventListener('click', () => {
-      const next = Number(item.dataset.slide);
-      if (!Number.isNaN(next)) {
-        current = Math.max(0, Math.min(slides.length - 1, next));
-        updateUI();
-      }
-    });
-  });
+  // navItems.forEach((item) => {
+    // item.addEventListener('click', () => {
+      // const next = Number(item.dataset.slide);
+      // if (!Number.isNaN(next)) {
+        // current = Math.max(0, Math.min(slides.length - 1, next));
+        // updateUI();
+      // }
+    // });
+  // });
 
   window.go = (step) => {
     current = Math.max(0, Math.min(slides.length - 1, current + step));
