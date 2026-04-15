@@ -329,6 +329,7 @@
           <div class="topbar-row">
             <button class="mode" id="modeToggle" type="button">Student Mode</button>
             <button class="btn" id="downloadBtn" type="button">Download Jawaban</button>
+            <button class="btn" id="resetBtn" type="button">Reset Jawaban</button>
             <div class="spacer"></div>
             <span id="statusText" style="color: var(--muted); font-size: 0.9rem;">Ready</span>
           </div>
@@ -360,15 +361,19 @@
       const toast = document.getElementById('toast');
       const modeToggle = document.getElementById('modeToggle');
       const downloadBtn = document.getElementById('downloadBtn');
+      const resetBtn = document.getElementById('resetBtn');
       const progressMeta = document.getElementById('progressMeta');
       const progressFill = document.getElementById('progressFill');
       const statusText = document.getElementById('statusText');
 
       const MODE_KEY = 'mdh_mode';
       const ANSWER_PREFIX = 'mdh_answer_';
+      const ANSWER_COUNT_KEY = 'mdh_answer_count';
       let currentPage = 'session';
       let missionCount = 0;
       let mode = localStorage.getItem(MODE_KEY) === 'dosen' ? 'dosen' : 'student';
+      let revealObserver = null;
+      const pageCache = new Map();
 
       function initNav() {
         navList.innerHTML = pages.map((page) => `
@@ -403,9 +408,14 @@
 
         let html = '<section><h1>Content not found</h1></section>';
         try {
-          const res = await fetch(page.file, { cache: 'no-store' });
-          if (!res.ok) throw new Error('fetch failed');
-          html = await res.text();
+          if (pageCache.has(page.file)) {
+            html = pageCache.get(page.file);
+          } else {
+            const res = await fetch(page.file, { cache: 'no-store' });
+            if (!res.ok) throw new Error('fetch failed');
+            html = await res.text();
+            pageCache.set(page.file, html);
+          }
         } catch {
           statusText.textContent = 'Offline fallback active';
         }
@@ -432,8 +442,8 @@
         if (currentPage === 'mission') {
           enhanceMissionPage();
         } else {
-          missionCount = 0;
-          updateProgress(0, 0);
+          missionCount = Number(localStorage.getItem(ANSWER_COUNT_KEY)) || missionCount;
+          refreshMissionProgress();
         }
 
         applyMode();
@@ -442,6 +452,7 @@
       function enhanceMissionPage() {
         const questions = app.querySelectorAll('[data-mission-question], .question');
         missionCount = questions.length;
+        localStorage.setItem(ANSWER_COUNT_KEY, String(missionCount));
 
         questions.forEach((questionEl, index) => {
           let input = app.querySelector(`textarea[data-answer-index="${index}"]`);
@@ -514,6 +525,28 @@
         URL.revokeObjectURL(url);
       }
 
+      function resetAnswers() {
+        const total = Number(localStorage.getItem(ANSWER_COUNT_KEY)) || missionCount;
+        if (!total) {
+          showToast('Belum ada jawaban');
+          return;
+        }
+
+        if (!window.confirm('Hapus semua jawaban tersimpan?')) return;
+
+        for (let i = 0; i < total; i += 1) {
+          localStorage.removeItem(`${ANSWER_PREFIX}${i}`);
+        }
+
+        app.querySelectorAll('.answer-box').forEach((el) => {
+          el.value = '';
+          autoResize(el);
+        });
+
+        refreshMissionProgress();
+        showToast('Jawaban direset');
+      }
+
       function setupRevealObserver() {
         const targets = app.querySelectorAll('h1, h2, h3, p, li, .card, .answer-box, .answer-key');
         targets.forEach((el, index) => {
@@ -521,16 +554,17 @@
           el.style.setProperty('--delay', `${Math.min(index * 35, 280)}ms`);
         });
 
-        const observer = new IntersectionObserver((entries) => {
+        if (revealObserver) revealObserver.disconnect();
+        revealObserver = new IntersectionObserver((entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
               entry.target.classList.add('in-view');
-              observer.unobserve(entry.target);
+              revealObserver.unobserve(entry.target);
             }
           });
         }, { threshold: 0.12 });
 
-        targets.forEach((el) => observer.observe(el));
+        targets.forEach((el) => revealObserver.observe(el));
       }
 
       function autoResize(el) {
@@ -551,10 +585,34 @@
       });
 
       downloadBtn.addEventListener('click', downloadAnswers);
+      resetBtn.addEventListener('click', resetAnswers);
+
+      async function prefetchPages() {
+        const jobs = pages.map(async (p) => {
+          try {
+            const res = await fetch(p.file, { cache: 'no-store' });
+            if (!res.ok) return;
+            const html = await res.text();
+            pageCache.set(p.file, html);
+            if (p.id === 'mission') {
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(html, 'text/html');
+              const total = doc.querySelectorAll('[data-mission-question], .question').length;
+              if (total) {
+                missionCount = total;
+                localStorage.setItem(ANSWER_COUNT_KEY, String(total));
+                refreshMissionProgress();
+              }
+            }
+          } catch {}
+        });
+        await Promise.all(jobs);
+      }
 
       initNav();
       setActiveNav('session');
       loadPage('session');
+      prefetchPages();
     </script>
   </body>
 </html>
