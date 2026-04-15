@@ -286,6 +286,14 @@ body{
   box-shadow:0 0 18px rgba(185,133,118,0.75);
   background: linear-gradient(90deg, #d8a299, #cbb279);
 }
+  .html {
+scroll-behavior: smooth;
+scroll-snap-type: y mandatory;
+}
+
+.section {
+scroll-snap-align: start;
+}
 
 </style>
 </head>
@@ -868,6 +876,56 @@ document.addEventListener("DOMContentLoaded", () => {
 
   updateUI();
 });
+  <script>
+
+/* GET ALL SECTIONS */
+const sectionsList = Array.from(document.querySelectorAll('.section'))
+
+let currentIndex = 0
+
+/* DETECT CURRENT SECTION BASED ON SCROLL */
+function updateCurrentSection(){
+let scrollPos = window.scrollY
+
+sectionsList.forEach((sec, i)=>{
+if(scrollPos >= sec.offsetTop - 200){
+currentIndex = i
+}
+})
+}
+
+/* SCROLL TO SECTION */
+let isScrolling = false
+
+function goToSection(index){
+if(isScrolling) return
+
+isScrolling = true
+
+sectionsList[index].scrollIntoView({
+behavior:'smooth'
+})
+
+setTimeout(()=>{
+isScrolling = false
+},700)
+}
+/* KEYBOARD CONTROL */
+document.addEventListener('keydown', (e)=>{
+
+updateCurrentSection()
+
+if(e.key === "ArrowRight"){
+goToSection(currentIndex + 1)
+}
+
+if(e.key === "ArrowLeft"){
+goToSection(currentIndex - 1)
+}
+
+})
+
+</script>
 </script>
 </body>
 </html>
